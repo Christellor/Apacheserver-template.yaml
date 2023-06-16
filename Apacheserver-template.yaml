@@ -1,0 +1,62 @@
+Parameters:
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t3.nano, or m1.large. Default is t3.nano
+
+Mappings:
+  RegionMappings: #mapping AMI family based on the region and AMI family
+    us-west-2:
+      Linux: ami-07dfed28fcf95241c
+    us-east-1:
+      Linux: ami-022e1a32d3f742bd8
+
+
+Resources:
+  MyEC2Instance: #logical id
+    Type: AWS::EC2::Instance
+    Properties:
+      Imageld: !FindInMap [RegionMappings, "us-east-1", Linux] #AMI ID
+      InstanceType: !Ref InstanceTypeParameter
+      KeyName: OR_key
+      SecurityGroupIds:
+        - !ImportValue SampleNetworkCrossStack-SecurityGroupID
+      SubnetId: !ImportValue SampleNetworkCrossStack-SubnetID
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemct1 start httpd
+          systemct1 enable httpd
+          echo "Launching this Christellor ec2 in region: ${'AWS::Region}" > /var/www/html/index.html 
+
+  MyEIP:
+  Type: AWS::EC2::EIP
+  Properties:
+    InstanceId: !Ref MyEC2Instance
+    Tags:
+      - Key: "Name"
+        Value: "apache-server"
+Outputs:
+  PrivateIpAddress: #logical ID of the output
+    Description: Returns value of privt ip address
+    Value: !GetAtt MyEC2Instance.PrivateIp #This should return the private IP of this instance
+  PrivateDnsNameEc2: #logical ID of the output
+    Description: Returns value of the prvt dns name
+    Value: !GetAtt MyEC2Instance.PrivateDnsName #This should return the private dns of this instance
+
+
+
+          
+
+
+
+      
+
+
+  
